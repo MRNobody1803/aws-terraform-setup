@@ -13,9 +13,7 @@ data "aws_ami" "lts-linux-img" {
   }
 }
 
-output "aws_ami_id" {
-  value = data.aws_ami.lts-linux-img.id
-}
+
 
 resource "aws_key_pair" "ssh-key" {
   key_name = "server-key"
@@ -33,10 +31,37 @@ resource "aws_instance" "app-server" {
   associate_public_ip_address = true # to be available from internet
   key_name = aws_key_pair.ssh-key.key_name
 
-  user_data = file("entry-script.sh")
+#   user_data = file("entry-script.sh")
+
+  connection {
+    type = "ssh"
+    host = self.public_ip
+    user = "ec2-user"
+    private_key = file(var.private_key_location)
+
+  }
+
+  ## PROVISIONNER ARE NOT RECOMMENDED IN TERRAFORM :(
+
+#   provisioner "file" {
+#     source = "entry-script.sh"
+#     destination = "/home/ec2-user/entry-script-ec2.sh"
+#   }
+#
+#   provisioner "remote-exec" {
+#     script = file("entry-script-ec2.sh")
+#   }
+
+#   provisioner "remote-exec" {
+#     inline = [
+#         "export ENV=dev",
+#         "mkdir newdir"
+#     ]
+#   }
 
   tags = {
     Name: "${var.env_prefix}-server"
   }
 
 }
+
