@@ -1,12 +1,6 @@
-resource "aws_vpc" "app-vpc" {
-  cidr_block = var.vpc_cidr_block
-  tags = {
-    Name: "${var.env_prefix}-vpc"
-  }
-}
 # ----------- SUBNET ( WE WILL CREATE AFTER PRIVATE AND PUB ONE ) -------
 resource "aws_subnet" "app-subnet-1" {
-  vpc_id = aws_vpc.app-vpc.id
+  vpc_id = var.vpc_id
   cidr_block = var.subnet_cidr_block
   availability_zone = var.avail_zone
   tags = {
@@ -15,11 +9,12 @@ resource "aws_subnet" "app-subnet-1" {
 }
 # -------- INTERNET GATEWAY --------------
 resource "aws_internet_gateway" "app-igw" {
-  vpc_id = aws_vpc.app-vpc.id
+  vpc_id = var.vpc_id
   tags = {
     Name: "${var.env_prefix}-igw"
   }
 }
+
 # -------- ROUTE TABLE -----------------------
 /*resource "aws_route_table" "app-route-table" {
   vpc_id = aws_vpc.app-vpc.id
@@ -32,13 +27,14 @@ resource "aws_internet_gateway" "app-igw" {
   }
 }
 # --- ROUTE TABLE AND SUBNET ASS ---------------
-resource "aws_route_table_association" "ass-rtb-subnet" {
+resource "aws_route_table_association" "ass-rtb-network" {
   route_table_id = aws_route_table.app-route-table.id
-  subnet_id = aws_subnet.app-subnet-1.id
+  subnet_id = aws_subnet.app-network-1.id
 }*/
+
 # ---- DEFAULT ROUTE TABLE ASS ------------------
 resource "aws_default_route_table" "app-df-route-table" {
-  default_route_table_id = aws_vpc.app-vpc.default_route_table_id
+  default_route_table_id = var.default_root_table_id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -49,37 +45,7 @@ resource "aws_default_route_table" "app-df-route-table" {
   }
 }
 # No needs to the association in this case when using default rtb
-# because subnet is automaticaly associated with the default rtb
+# because network is automaticaly associated with the default rtb
 
-# ----------------- FIREWALL RULES -----------------------
 
-resource "aws_default_security_group" "app-sg" {
-  vpc_id = aws_vpc.app-vpc.id
-  # INBOUND TRAFFIC
-  ingress {
-    from_port = 22
-    to_port = 22
-    protocol = "tcp"
-    cidr_blocks = [var.allowed_ip]
-  }
-
-  ingress {
-    from_port = 8080
-    to_port = 8080
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  # ALLOW ANY TRAFFIC TO LEAVE THE VPC (OUTBOUND TRAFFIC)
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    prefix_list_ids = []
-  }
-
-  tags = {
-    Name: "${var.env_prefix}-default-sg"
-  }
-}
 
