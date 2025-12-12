@@ -7,3 +7,7 @@ variable instance_type {}
 variable public_key_location {}
 variable private_key_location {}
 variable image_name {}
+
+// ---------------------------------------
+variable private_subnet_cidr_blocks {}
+variable public_subnet_cidr_blocks {}
